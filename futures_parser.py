@@ -8,10 +8,12 @@ from decimal import Decimal
 
 BASE_BINANCE_API_URL = 'https://fapi.binance.com/fapi'
 
+app_storage = {}
+
 
 async def get_futures_current_price(futures_name:str):
     # Создаем сессию aiohttp внутри которой будем отправлять все запросы
-    async with ClientSession() as session:
+    async with app_storage['session'] as session:
         # Полный адрес и параметры запроса для получения информации о фьючерсе за текущий час
         url = f'{BASE_BINANCE_API_URL}/v1/markPriceKlines'
         params = {'symbol': futures_name, 'interval': '1h', 'limit': 1}
@@ -37,11 +39,14 @@ async def get_futures_current_price(futures_name:str):
 
 
 async def main(waiting_time: int):
-    # Запускаем бесконечный цикл с синхронным сном, чтобы не спамить запросами
-    print('Используйте ^C для остановки скрипта')
-    while True:
-        await get_futures_current_price('XRPUSDT')
-        time.sleep(waiting_time)
+    app_storage['session'] = ClientSession()
+
+    async with app_storage['session']:
+        # Запускаем бесконечный цикл с синхронным сном, чтобы не спамить запросами
+        print('Используйте ^C для остановки скрипта')
+        while True:
+            await get_futures_current_price('XRPUSDT')
+            time.sleep(waiting_time)
         
 
 if __name__ == '__main__':
